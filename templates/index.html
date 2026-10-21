@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Audiobook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <main class="container">
+        <header>
+            <a class="logo" href="/">PDF<span>.</span></a>
+            <span class="tag">READ. LISTEN. REPEAT.</span>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">YOUR PERSONAL AUDIOBOOK</p>
+            <h1>Turn your PDFs<br>into <span>audio.</span></h1>
+            <p class="description">
+                Upload a document, sit back, and listen.
+                Let your reading become effortless.
+            </p>
+
+            <div class="upload-box">
+                <div class="file-icon">PDF</div>
+                <h2>Choose your document</h2>
+                <p>Select a PDF file from your computer.</p>
+
+                <input type="file" id="pdfInput" accept=".pdf,application/pdf">
+
+                <button id="uploadBtn" class="secondary-btn">
+                    Upload PDF
+                </button>
+
+                <p id="fileName" class="file-name">No file selected</p>
+            </div>
+
+            <div class="player">
+                <div class="player-heading">
+                    <div>
+                        <p class="eyebrow">NOW PLAYING</p>
+                        <h2 id="bookTitle">No document loaded</h2>
+                    </div>
+                    <div id="statusDot" class="status-dot"></div>
+                </div>
+
+                <div class="progress-track">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+
+                <div class="progress-info">
+                    <span id="progressText">Upload a PDF to begin</span>
+                    <span id="pageCount">0 / 0</span>
+                </div>
+
+                <div class="controls">
+                    <button id="startBtn" disabled>Start Listening</button>
+                    <button id="stopBtn" class="exit-btn" disabled>Exit</button>
+                </div>
+            </div>
+
+            <p id="message" role="status" aria-live="polite">
+                Your audiobook is waiting.
+            </p>
+        </section>
+
+        <footer>
+            <span>PDF AUDIOBOOK</span>
+            <span>MADE FOR YOUR READING TIME</span>
+        </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

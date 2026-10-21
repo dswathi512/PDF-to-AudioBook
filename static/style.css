@@ -1,0 +1,275 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap');
+
+:root {
+    --bg: #100d1d;
+    --panel: #1b1630;
+    --panel-light: #251d3d;
+    --purple: #a78bfa;
+    --pink: #f0abfc;
+    --text: #f5f3ff;
+    --muted: #a7a0bd;
+    --border: rgba(255, 255, 255, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 50% 0%, #30204c 0%, transparent 55%),
+        var(--bg);
+    color: var(--text);
+    font-family: 'Roboto Mono', monospace;
+}
+
+.container {
+    width: min(100% - 40px, 1000px);
+    margin: auto;
+}
+
+header,
+footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 28px 0;
+}
+
+.logo {
+    color: var(--text);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.logo span,
+h1 span {
+    color: var(--pink);
+}
+
+.tag,
+.eyebrow,
+footer {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+.hero {
+    max-width: 720px;
+    margin: 75px auto 60px;
+    text-align: center;
+}
+
+.eyebrow {
+    color: var(--purple);
+}
+
+h1 {
+    margin: 20px 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(38px, 7vw, 68px);
+    line-height: 1.2;
+    letter-spacing: -2px;
+}
+
+.description {
+    max-width: 520px;
+    margin: 0 auto 38px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.upload-box,
+.player {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(27, 22, 48, 0.88);
+    text-align: left;
+}
+
+.upload-box {
+    text-align: center;
+    border-style: dashed;
+}
+
+.file-icon {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 62px;
+    margin: 0 auto 18px;
+    border: 1px solid var(--purple);
+    border-radius: 8px;
+    color: var(--pink);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+}
+
+h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+}
+
+.upload-box p,
+.file-name {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+input[type="file"] {
+    display: block;
+    width: 100%;
+    max-width: 340px;
+    margin: 24px auto 16px;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+}
+
+button {
+    padding: 13px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(100deg, var(--purple), var(--pink));
+    color: #171025;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    background: var(--panel-light);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.player {
+    margin-top: 20px;
+}
+
+.player-heading,
+.progress-info,
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.player-heading h2 {
+    margin-bottom: 0;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #686078;
+}
+
+.status-dot.active {
+    background: #b9fbc0;
+    box-shadow: 0 0 14px #b9fbc0;
+}
+
+.progress-track {
+    height: 5px;
+    margin-top: 25px;
+    border-radius: 10px;
+    background: #342a4c;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    transition: width 0.4s;
+}
+
+.progress-info {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.controls {
+    justify-content: flex-start;
+    margin-top: 24px;
+}
+
+.exit-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+
+#message {
+    min-height: 20px;
+    margin-top: 20px;
+    color: var(--pink);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+footer {
+    border-top: 1px solid var(--border);
+    font-size: 9px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        width: min(100% - 24px, 1000px);
+    }
+
+    header,
+    footer {
+        align-items: flex-start;
+    }
+
+    .tag {
+        max-width: 130px;
+        text-align: right;
+        line-height: 1.7;
+    }
+
+    .hero {
+        margin-top: 45px;
+    }
+
+    .upload-box,
+    .player {
+        padding: 20px;
+    }
+
+    .controls {
+        flex-wrap: wrap;
+    }
+
+    footer {
+        flex-direction: column;
+    }
+}
