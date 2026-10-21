@@ -13,14 +13,29 @@ const progressBar = document.getElementById("progressBar");
 const statusDot = document.getElementById("statusDot");
 
 let uploaded = false;
-let isPlaying = false;
 let statusTimer = null;
+let stopping = false;
 
 pdfInput.addEventListener("change", () => {
     const file = pdfInput.files[0];
-
     fileName.textContent = file ? file.name : "No file selected";
 });
+
+function stopStatusTimer() {
+    if (statusTimer) {
+        clearInterval(statusTimer);
+        statusTimer = null;
+    }
+}
+
+function setStoppedUI(text) {
+    stopStatusTimer();
+
+    statusDot.classList.remove("active");
+    startBtn.disabled = !uploaded;
+    stopBtn.disabled = true;
+    message.textContent = text;
+}
 
 uploadBtn.addEventListener("click", async () => {
     const file = pdfInput.files[0];
@@ -37,6 +52,7 @@ uploadBtn.addEventListener("click", async () => {
 
     uploadBtn.disabled = true;
     startBtn.disabled = true;
+    stopBtn.disabled = true;
     message.textContent = "Uploading and reading your PDF...";
 
     try {
@@ -55,20 +71,17 @@ uploadBtn.addEventListener("click", async () => {
         }
 
         uploaded = true;
-        isPlaying = false;
-
         bookTitle.textContent = file.name;
         progressText.textContent = "Ready to listen";
         pageCount.textContent = `${data.count} sentences`;
         progressBar.style.width = "0%";
 
+        statusDot.classList.remove("active");
         startBtn.disabled = false;
         stopBtn.disabled = true;
-
         message.textContent = data.message;
 
     } catch (error) {
-        uploaded = false;
         message.textContent = error.message;
     } finally {
         uploadBtn.disabled = false;
@@ -82,6 +95,7 @@ startBtn.addEventListener("click", async () => {
     }
 
     startBtn.disabled = true;
+    stopBtn.disabled = true;
     message.textContent = "Starting audiobook...";
 
     try {
@@ -95,22 +109,27 @@ startBtn.addEventListener("click", async () => {
             throw new Error(data.error || "Could not start playback.");
         }
 
-        isPlaying = true;
-        stopBtn.disabled = false;
         statusDot.classList.add("active");
+        stopBtn.disabled = false;
         message.textContent = data.message;
 
-        if (statusTimer) clearInterval(statusTimer);
-        statusTimer = setInterval(updateStatus, 1000);
+        stopStatusTimer();
+        statusTimer = setInterval(updateStatus, 700);
+        updateStatus();
 
     } catch (error) {
         message.textContent = error.message;
         startBtn.disabled = false;
+        stopBtn.disabled = true;
     }
 });
 
 stopBtn.addEventListener("click", async () => {
+    if (stopping) return;
+
+    stopping = true;
     stopBtn.disabled = true;
+    startBtn.disabled = true;
     message.textContent = "Stopping audiobook...";
 
     try {
@@ -120,18 +139,18 @@ stopBtn.addEventListener("click", async () => {
 
         const data = await response.json();
 
-        isPlaying = false;
-        statusDot.classList.remove("active");
-        message.textContent = data.message;
-
-        if (statusTimer) {
-            clearInterval(statusTimer);
-            statusTimer = null;
+        if (!response.ok) {
+            throw new Error(data.error || "Could not stop playback.");
         }
 
-        startBtn.disabled = false;
+        setStoppedUI(data.message);
+
     } catch (error) {
-        message.textContent = "Could not stop playback.";
+        message.textContent = error.message;
+        startBtn.disabled = false;
+        stopBtn.disabled = false;
+    } finally {
+        stopping = false;
     }
 });
 
@@ -140,40 +159,27 @@ async function updateStatus() {
         const response = await fetch("/status");
         const data = await response.json();
 
-        const total = data.total;
-        const current = data.current;
+        if (data.total > 0) {
+            const percentage = Math.min(
+                (data.current / data.total) * 100,
+                100
+            );
 
-        if (total > 0) {
-            const percentage = Math.min((current / total) * 100, 100);
             progressBar.style.width = `${percentage}%`;
             progressText.textContent = `${percentage.toFixed(0)}% completed`;
-            pageCount.textContent = `${current} / ${total} sentences`;
+            pageCount.textContent =
+                `${data.current} / ${data.total} sentences`;
         }
 
         if (data.state === "finished") {
-            isPlaying = false;
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            statusDot.classList.remove("active");
-            message.textContent = "Audiobook finished!";
-
-            clearInterval(statusTimer);
-            statusTimer = null;
+            progressBar.style.width = "100%";
+            setStoppedUI("Audiobook finished!");
+        } else if (data.state === "stopped") {
+            setStoppedUI("Playback stopped.");
+        } else if (data.state === "error") {
+            setStoppedUI("A speech error occurred. Please try again.");
         }
 
-        if (data.state === "stopped" || data.state === "error") {
-            isPlaying = false;
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            statusDot.classList.remove("active");
-
-            if (data.state === "error") {
-                message.textContent = "A speech error occurred. Please try again.";
-            }
-
-            clearInterval(statusTimer);
-            statusTimer = null;
-        }
     } catch (error) {
         console.error("Could not get playback status:", error);
     }

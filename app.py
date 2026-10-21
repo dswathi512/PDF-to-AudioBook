@@ -13,24 +13,51 @@ state = "idle"
 
 stopped = threading.Event()
 lock = threading.Lock()
+engine_lock = threading.Lock()
+
+player = None
+playback_thread = None
+
+
+def stop_speech():
+    """Signal the worker and stop the active speech engine."""
+    stopped.set()
+
+    with engine_lock:
+        engine = player
+
+    if engine is not None:
+        try:
+            engine.stop()
+        except Exception as e:
+            print("Could not stop speech engine:", e)
 
 
 def read_pdf():
-    global current, state
+    global current, state, player
 
-    player = pyttsx3.init()
+    engine = None
 
     try:
-        while current < len(sentences):
-            if stopped.is_set():
-                break
+        engine = pyttsx3.init()
 
+        with engine_lock:
+            player = engine
+
+        while not stopped.is_set():
             with lock:
+                if current >= len(sentences):
+                    break
+
                 sentence = sentences[current]
                 state = "playing"
 
-            player.say(sentence)
-            player.runAndWait()
+            # Check again immediately before speaking.
+            if stopped.is_set():
+                break
+
+            engine.say(sentence)
+            engine.runAndWait()
 
             if stopped.is_set():
                 break
@@ -43,11 +70,20 @@ def read_pdf():
 
     except Exception as e:
         print("Speech error:", e)
+
         with lock:
-            state = "error"
+            state = "stopped" if stopped.is_set() else "error"
 
     finally:
-        player.stop()
+        if engine is not None:
+            try:
+                engine.stop()
+            except Exception:
+                pass
+
+        with engine_lock:
+            if player is engine:
+                player = None
 
 
 @app.route("/")
@@ -66,6 +102,12 @@ def upload():
 
     if not file.filename.lower().endswith(".pdf"):
         return jsonify(error="Please upload a PDF file."), 400
+
+    with lock:
+        if playback_thread is not None and playback_thread.is_alive():
+            return jsonify(
+                error="Stop the current audiobook and wait for playback to stop before uploading another PDF."
+            ), 409
 
     try:
         reader = PyPDF2.PdfReader(file)
@@ -98,7 +140,7 @@ def upload():
 
         return jsonify(
             message="PDF uploaded successfully!",
-            count=len(sentences)
+            count=len(new_sentences)
         )
 
     except Exception as e:
@@ -107,20 +149,31 @@ def upload():
 
 @app.route("/start", methods=["POST"])
 def start():
-    global current, state
+    global current, state, playback_thread
 
     with lock:
         if not sentences:
             return jsonify(error="Please upload a PDF first."), 400
 
-        if state == "playing":
-            return jsonify(message="Audiobook is already playing.")
+        if playback_thread is not None and playback_thread.is_alive():
+            if state == "playing":
+                return jsonify(
+                    message="Audiobook is already playing."
+                )
 
-        current = 0
+            return jsonify(
+                error="Playback is still stopping. Please try again shortly."
+            ), 409
+
         stopped.clear()
+        current = 0
         state = "playing"
 
-    threading.Thread(target=read_pdf, daemon=True).start()
+        playback_thread = threading.Thread(
+            target=read_pdf,
+            daemon=True
+        )
+        playback_thread.start()
 
     return jsonify(message="Audiobook started!")
 
@@ -129,10 +182,11 @@ def start():
 def stop():
     global state
 
-    stopped.set()
+    stop_speech()
 
     with lock:
-        state = "stopped"
+        if state not in ("finished", "error"):
+            state = "stopped"
 
     return jsonify(message="Playback stopped.")
 
@@ -142,7 +196,7 @@ def status():
     with lock:
         return jsonify(
             state=state,
-            current=min(current + 1, len(sentences)),
+            current=min(current + 1, len(sentences)) if sentences else 0,
             total=len(sentences)
         )
 
